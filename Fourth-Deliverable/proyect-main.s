@@ -20,6 +20,7 @@ player_dir:       .res 1 ; 0 is left, 1 is right
 pad1:             .res 1 ; will contain information for control 1
 frameCount:       .res 1 ; for walking frames, first frame is zero, last frame is 2
 timer:            .res 1 ; for the delay in walking frames counts from 1-3
+damageCount:      .res 1 ; for the counter of damage
 airborne:         .res 1 ; 0 is ground, 1 is on air
 jump_count:       .res 1 ; counter to know if jump has reached desired height
 player_up:        .res 1 ; 0 is down, 1 is up
@@ -640,15 +641,6 @@ get_buttons:
   RTS
 .endproc
 
-.proc damage
-  LDA #$11
-  STA $0202
-  STA $0206
-  STA $020a
-  STA $020e
-.endproc
-
-
 .proc idle_left
   ; write player tile numbers
   LDA #$02
@@ -668,7 +660,6 @@ get_buttons:
   STA $020e
   RTS
 .endproc
-
 
 .proc idle_right
   ; write player tile numbers
@@ -690,6 +681,50 @@ get_buttons:
   STA $020e
   RTS
 .endproc
+
+
+.proc player_dead_right
+; write player tile numbers
+  LDA #$0b
+  STA $0201
+  LDA #$0c
+  STA $0205
+  LDA #$1b
+  STA $0209
+  LDA #$1c
+  STA $020d
+
+  ; write player tile attributes
+  ; use palette 2
+  LDA #$02
+  STA $0202
+  STA $0206
+  STA $020a
+  STA $020e
+  RTS
+.endproc
+
+
+.proc player_dead_left
+; write player tile numbers
+  LDA #$0c
+  STA $0201
+  LDA #$0b
+  STA $0205
+  LDA #$1c
+  STA $0209
+  LDA #$1b
+  STA $020d
+
+  ; write player tile attributes
+  LDA #$42 ; mirroring is used
+  STA $0202
+  STA $0206
+  STA $020a
+  STA $020e
+  RTS
+.endproc
+
 
 ;;------------------- MOVEMENT LOGIC-----------------------;;
 
