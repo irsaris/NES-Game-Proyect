@@ -18,6 +18,7 @@ player_y:         .res 1 ; left bottom sprite
 player_dir:       .res 1 ; 0 is left, 1 is right
 frameCount:       .res 1 ; for walking frames, first frame is zero, last frame is 2
 timer:            .res 1 ; for the delay in walking frames counts from 1-3
+damageCount:      .res 1
 
 ; Important Registers
 PPUCTRL   = $2000
@@ -63,7 +64,7 @@ vblankwait:
 	LDX #$00
 	LDA #$ff
 clear_oam:
-	STA $0200,X ; set sprite y-positions off the screen
+	STA $0200, X ; set sprite y-positions off the screen
 	INX
 	INX
 	INX
@@ -83,6 +84,7 @@ vblankwait2:
   STA frameCount
   STA player_dir 
   STA timer
+  STA damageCount
   
 
   JMP main
@@ -200,18 +202,19 @@ forever:
   ; Drawing the character.
   ; Logic for walking and jumping with respective 
   ; to the direction the character is moving.
- 
+
+  INC damageCount ; increase counter for damage
+  ; JSR idle_left
+  ; JSR punch_left
 
   walking_anim:
-
-    ; walking_left:
-    ;   JSR walk_left
-    ;   JMP updating
-
+    walking_left:
+      JSR walk_left
+      JMP updating
     
-    walking_right:
-      JSR walk_right
-      JMP updating    
+  ;   walking_right:
+  ;     JSR walk_right
+  ;     JMP updating    
 
   updating:
     JSR update_location
@@ -319,7 +322,25 @@ forever:
   STA $0209
   LDA #$1d
   STA $020d
+  
+  LDX damageCount
+  CPX #80          ; if its 5, reset 
+  bne change_color ; if not skip
+  LDX #$00
+  STX damageCount
 
+  change_color:
+    LDY damageCount
+    CPY #05
+    BNE rest 
+    LDA #$41
+    STA $0202
+    STA $0206
+    STA $020a
+    STA $020e
+    JMP done
+
+  rest:
   ; write player tile attributes
   LDA #$42  ; mirroring is used
   STA $0202
@@ -327,6 +348,7 @@ forever:
   STA $020a
   STA $020e
   
+  done:
   RTS
 .endproc
 
@@ -342,6 +364,24 @@ forever:
   LDA #$1e
   STA $020d
 
+  LDX damageCount
+  CPX #80          ; if its 5, reset 
+  bne change_color ; if not skip
+  LDX #$00
+  STX damageCount
+
+  change_color:
+    LDY damageCount
+    CPY #05
+    BNE rest 
+    LDA #$41
+    STA $0202
+    STA $0206
+    STA $020a
+    STA $020e
+    JMP done
+
+  rest:
   ; write player tile attributes
   ; use palette 2
   LDA #$02
@@ -349,6 +389,8 @@ forever:
   STA $0206
   STA $020a
   STA $020e
+  
+  done:
   RTS
 .endproc
 
@@ -361,7 +403,6 @@ forever:
   INC timer
   JMP update_location
   
-
   left_cycle:
   ; reset timer
   LDA #$00
@@ -543,12 +584,32 @@ forever:
   LDA #$11
   STA $020d
 
+  LDX damageCount
+  CPX #80          ; if its 5, reset 
+  bne change_color ; if not skip
+  LDX #$00
+  STX damageCount
+
+  change_color:
+    LDY damageCount
+    CPY #05
+    BNE rest 
+    LDA #$41
+    STA $0202
+    STA $0206
+    STA $020a
+    STA $020e
+    JMP done
+
+  rest:
   ; write player tile attributes
   LDA #$42 ; mirroring is used
   STA $0202
   STA $0206
   STA $020a
   STA $020e
+
+  done:
   RTS
 .endproc
 
@@ -564,6 +625,48 @@ forever:
   LDA #$12
   STA $020d
 
+  LDX damageCount
+  CPX #80          ; if its 5, reset 
+  bne change_color ; if not skip
+  LDX #$00
+  STX damageCount
+
+  change_color:
+    LDY damageCount
+    CPY #05
+    BNE rest 
+    LDA #$41
+    STA $0202
+    STA $0206
+    STA $020a
+    STA $020e
+    JMP done
+
+  rest:
+  ; write player tile attributes
+  ; use palette 2
+  LDA #$02
+  STA $0202
+  STA $0206
+  STA $020a
+  STA $020e
+
+  done:
+  RTS
+.endproc
+
+
+.proc player_dead_right
+; write player tile numbers
+  LDA #$0b
+  STA $0201
+  LDA #$0c
+  STA $0205
+  LDA #$1b
+  STA $0209
+  LDA #$1c
+  STA $020d
+
   ; write player tile attributes
   ; use palette 2
   LDA #$02
@@ -574,7 +677,25 @@ forever:
   RTS
 .endproc
 
+.proc player_dead_left
+; write player tile numbers
+  LDA #$0c
+  STA $0201
+  LDA #$0b
+  STA $0205
+  LDA #$1c
+  STA $0209
+  LDA #$1b
+  STA $020d
 
+  ; write player tile attributes
+  LDA #$42 ; mirroring is used
+  STA $0202
+  STA $0206
+  STA $020a
+  STA $020e
+  RTS
+.endproc
 
 
 .segment "RODATA"
